@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="1120" viewBox="0 0 2400 1120">
+<defs>
+ <marker id="arrow" markerWidth="11" markerHeight="11" refX="9.5" refY="5.5" orient="auto"><path d="M0 0L11 5.5 0 11Z" fill="#111"/></marker>
+ <style>.t{font-family:"Microsoft YaHei","Noto Sans CJK SC",sans-serif;fill:#111}.phase{fill:#fff;stroke:#111;stroke-width:2.4}.box{fill:#fff;stroke:#111;stroke-width:2.2}.gray{fill:#ededed;stroke:#aaa;stroke-width:1}.head{font-size:25px;font-weight:700}.bt{font-size:20px;font-weight:700}.bd{font-size:17px}.sm{font-size:15px}.note{font-size:16px}.line{fill:none;stroke:#111;stroke-width:2.5;marker-end:url(#arrow)}.thin{fill:none;stroke:#111;stroke-width:2}.dash{fill:none;stroke:#111;stroke-width:2;stroke-dasharray:6 6;marker-end:url(#arrow)}</style>
+</defs>
+<rect width="2400" height="1120" fill="#fff"/>
+
+<!-- Phase 1 -->
+<rect class="phase" x="70" y="30" width="1970" height="310"/>
+<text class="t head" x="1055" y="67" text-anchor="middle">Phase 1：外业机载测绘前端（KFGINS + Livox去畸变 + RTK锚定）</text>
+<rect class="box" x="98" y="95" width="300" height="205"/>
+<text class="t bt" x="248" y="130" text-anchor="middle">实地多传感器采集</text>
+<text class="t bd" x="248" y="166" text-anchor="middle">Livox LiDAR 原始点云</text><text class="t bd" x="248" y="196" text-anchor="middle">Livox IMU / 飞控 IMU</text><text class="t bd" x="248" y="226" text-anchor="middle">Camera RGB 图像</text><text class="t bd" x="248" y="256" text-anchor="middle">GNSS/RTK 位置、速度、航向</text><text class="t sm" x="248" y="284" text-anchor="middle">外业航线现场同步采集</text>
+<text class="t note" x="455" y="172" text-anchor="middle">硬件同步与标定预处理</text><path class="line" d="M398 207H500"/>
+<rect class="box" x="510" y="105" width="330" height="185"/>
+<text class="t bt" x="675" y="140" text-anchor="middle">KFGINS 组合导航</text><text class="t bd" x="675" y="174" text-anchor="middle">GNSS/RTK–IMU 误差状态滤波</text><text class="t bd" x="675" y="206" text-anchor="middle">融合位置、速度、姿态与质量信息</text><text class="t bd" x="675" y="238" text-anchor="middle">估计IMU偏置与连续导航轨迹</text><text class="t sm" x="675" y="270" text-anchor="middle">输出：初始全局位姿 T_nav</text>
+<text class="t note" x="895" y="172" text-anchor="middle">导航轨迹与时间对齐</text><path class="line" d="M840 207H950"/>
+<rect class="box" x="960" y="105" width="350" height="185"/>
+<text class="t bt" x="1135" y="140" text-anchor="middle">Livox逐点去畸变与关键帧</text><text class="t bd" x="1135" y="174" text-anchor="middle">Livox IMU补偿扫描内旋转</text><text class="t bd" x="1135" y="206" text-anchor="middle">导航插值补偿扫描内平移</text><text class="t bd" x="1135" y="238" text-anchor="middle">构建带初始全局位姿的关键帧</text><text class="t sm" x="1135" y="270" text-anchor="middle">输出：去畸变点云 / Pose / 时间戳</text>
+<path class="line" d="M1310 198H1380"/>
+<rect class="box" x="1390" y="105" width="360" height="185"/>
+<text class="t bt" x="1570" y="140" text-anchor="middle">关键帧筛选、真彩载荷与打包</text><text class="t bd" x="1570" y="174" text-anchor="middle">元数据：KF_ID、Timestamp、Pose</text><text class="t bd" x="1570" y="206" text-anchor="middle">载荷：Cloud、Image、IMU片段</text><text class="t bd" x="1570" y="238" text-anchor="middle">保存相机时间与内外参索引</text><text class="t sm" x="1570" y="270" text-anchor="middle">工程数据包：KF_Packet</text>
+<path class="line" d="M1750 198H1815"/>
+<rect class="box" x="1825" y="135" width="175" height="125"/>
+<text class="t bt" x="1912" y="175" text-anchor="middle">数据压缩</text><text class="t bd" x="1912" y="210" text-anchor="middle">校验与分片</text><text class="t sm" x="1912" y="238" text-anchor="middle">断点续传标识</text>
+<rect class="gray" x="2080" y="110" width="250" height="178"/>
+<text class="t bt" x="2205" y="145" text-anchor="middle">外业传输策略</text><text class="t bd" x="2205" y="180" text-anchor="middle">4G / 5G / 专网</text><text class="t bd" x="2205" y="212" text-anchor="middle">断网缓存至机载SSD</text><text class="t bd" x="2205" y="244" text-anchor="middle">网络恢复后自动续传</text><text class="t sm" x="2205" y="273" text-anchor="middle">原始记录可采用 rosbag</text>
+<path class="line" d="M2000 198H2070"/><path class="line" d="M2330 198H2380"/><text class="t note" x="2310" y="325" text-anchor="end">进入 Phase 2</text>
+
+<!-- upper feedback -->
+<path class="line" d="M1830 470V392H660V302"/><rect x="920" y="366" width="630" height="24" fill="#fff"/><text class="t note" x="1235" y="383" text-anchor="middle">读取 T_global（后端优化后的全局最优轨迹与位姿修正）</text>
+
+<!-- Phase 2 -->
+<rect class="phase" x="330" y="430" width="1680" height="290"/>
+<text class="t head" x="1170" y="466" text-anchor="middle">Phase 2：工程数据传输、接入与存储</text>
+<path class="line" d="M70 565H375"/><text class="t note" x="210" y="544" text-anchor="middle">Phase 1：机载测绘数据包</text>
+<rect class="box" x="385" y="495" width="300" height="150"/>
+<text class="t bt" x="535" y="535" text-anchor="middle">接入网关</text><text class="t bd" x="535" y="570" text-anchor="middle">接收数据流、校验签名</text><text class="t bd" x="535" y="602" text-anchor="middle">解包、去重与断点续传确认</text><text class="t sm" x="535" y="630" text-anchor="middle">项目 / 航次 / 设备身份鉴权</text>
+<path class="line" d="M685 570H760"/>
+<path class="box" d="M820 500L890 570 820 640 750 570Z"/><text class="t bd" x="820" y="576" text-anchor="middle">数据分流</text>
+<path class="line" d="M890 545H970V505H1030"/><path class="line" d="M890 595H970V635H1030"/>
+<rect class="box" x="1040" y="472" width="210" height="88"/><text class="t bt" x="1145" y="507" text-anchor="middle">会话与任务管理</text><text class="t sm" x="1145" y="537" text-anchor="middle">航次、帧索引、处理状态</text>
+<rect class="box" x="1040" y="600" width="210" height="88"/><text class="t bt" x="1145" y="635" text-anchor="middle">二进制数据处理</text><text class="t sm" x="1145" y="665" text-anchor="middle">点云 / 图像 / IMU片段</text>
+<rect class="gray" x="1300" y="465" width="290" height="100"/><text class="t bt" x="1445" y="497" text-anchor="middle">工程元数据</text><text class="t sm" x="1445" y="527" text-anchor="middle">project_id、session_id、kf_id</text><text class="t sm" x="1445" y="551" text-anchor="middle">pose、GNSS质量、storage_path</text>
+<rect class="gray" x="1300" y="595" width="290" height="100"/><text class="t bt" x="1445" y="627" text-anchor="middle">点云与影像文件</text><text class="t sm" x="1445" y="657" text-anchor="middle">.pcd / .ply / .jpg / 原始序列</text><text class="t sm" x="1445" y="681" text-anchor="middle">校验和、版本及空间索引</text>
+<path class="line" d="M1250 516H1290"/><path class="line" d="M1250 644H1290"/>
+<ellipse class="box" cx="1790" cy="498" rx="135" ry="30"/><rect class="box" x="1655" y="498" width="270" height="92"/><ellipse class="box" cx="1790" cy="590" rx="135" ry="30"/><text class="t bt" x="1790" y="530" text-anchor="middle">SQL / PostGIS</text><text class="t sm" x="1790" y="558" text-anchor="middle">项目、索引、Pose与任务状态</text>
+<ellipse class="box" cx="1790" cy="633" rx="135" ry="30"/><rect class="box" x="1655" y="633" width="270" height="55"/><ellipse class="box" cx="1790" cy="688" rx="135" ry="30"/><text class="t bt" x="1790" y="665" text-anchor="middle">对象存储 / 文件系统</text><text class="t sm" x="1790" y="690" text-anchor="middle">点云、图像与处理成果</text>
+<path class="line" d="M1590 515H1645"/><path class="line" d="M1590 645H1645"/>
+<path class="line" d="M1925 540H2140"/><text class="t note" x="2030" y="520" text-anchor="middle">提供 Pose / GNSS / 索引</text><path class="dash" d="M1925 660H2140"/><text class="t note" x="2030" y="640" text-anchor="middle">按需读取点云与图像</text>
+
+<!-- Phase 3 -->
+<rect class="phase" x="240" y="780" width="1870" height="300"/>
+<text class="t head" x="1210" y="816" text-anchor="middle">Phase 3：测绘后端处理与成果输出（全局优化 + 全量重建 + 真彩映射）</text>
+<text class="t note" x="100" y="868">Pose / GNSS / 关键帧索引</text><path class="line" d="M70 885H460"/><text class="t note" x="100" y="936">点云 / 图像 / IMU数据</text><path class="dash" d="M70 953H460"/><text class="t note" x="100" y="1004">数据落盘完成后触发处理任务</text><path class="line" d="M70 1020H460"/>
+<rect class="box" x="470" y="845" width="350" height="185"/><text class="t bt" x="645" y="882" text-anchor="middle">RTK锚定全局位姿图优化</text><text class="t bd" x="645" y="916" text-anchor="middle">RTK位置与外部姿态先验</text><text class="t bd" x="645" y="948" text-anchor="middle">相邻关键帧与跨航带LiDAR约束</text><text class="t bd" x="645" y="980" text-anchor="middle">鲁棒核抑制异常匹配</text><text class="t sm" x="645" y="1010" text-anchor="middle">输出：最优轨迹 T_global</text>
+<path class="line" d="M820 938H900"/>
+<rect class="box" x="910" y="845" width="335" height="185"/><text class="t bt" x="1078" y="882" text-anchor="middle">全量优化几何重建</text><text class="t bd" x="1078" y="916" text-anchor="middle">读取全部有效Livox扫描</text><text class="t bd" x="1078" y="948" text-anchor="middle">应用逐点去畸变与优化修正</text><text class="t bd" x="1078" y="980" text-anchor="middle">流式生成统一坐标系三维点云</text><text class="t sm" x="1078" y="1010" text-anchor="middle">保持原始几何，不做近邻补点</text>
+<path class="line" d="M1245 938H1325"/>
+<rect class="box" x="1335" y="845" width="330" height="185"/><text class="t bt" x="1500" y="882" text-anchor="middle">多视角真彩映射</text><text class="t bd" x="1500" y="916" text-anchor="middle">优化相机位姿与时空候选选择</text><text class="t bd" x="1500" y="948" text-anchor="middle">内外参投影、畸变与遮挡检查</text><text class="t bd" x="1500" y="980" text-anchor="middle">可见点RGB采样与有效性标记</text><text class="t sm" x="1500" y="1010" text-anchor="middle">输出完整彩色点云 / 严格真彩点云</text>
+<path class="line" d="M1665 938H1745"/>
+<rect class="box" x="1740" y="845" width="325" height="185"/><text class="t bt" x="1902" y="882" text-anchor="middle">质量检查与成果输出</text><text class="t bd" x="1902" y="916" text-anchor="middle">点云完整性、坐标与覆盖检查</text><text class="t bd" x="1902" y="948" text-anchor="middle">整理全局彩色点云与优化轨迹</text><text class="t bd" x="1902" y="980" text-anchor="middle">生成质量与处理报告</text><text class="t sm" x="1902" y="1012" text-anchor="middle">工程成果文件直接交付</text>
+<path class="line" d="M645 845V762H1830V600"/><rect x="990" y="735" width="420" height="24" fill="#fff"/><text class="t note" x="1200" y="752" text-anchor="middle">更新最新优化位姿 T_global 与处理状态</text>
+
+<path class="line" d="M2065 885H2150"/><path class="line" d="M2065 938H2150"/><path class="line" d="M2065 991H2150"/><text class="t bd" x="2170" y="891">彩色三维点云（.ply / .pcd）</text><text class="t bd" x="2170" y="944">优化轨迹与位姿成果</text><text class="t bd" x="2170" y="997">质量检查与处理报告</text></svg>

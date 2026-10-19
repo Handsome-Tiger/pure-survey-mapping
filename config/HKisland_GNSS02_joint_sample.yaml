@@ -1,0 +1,77 @@
+bag:
+  path: /home/shuai/code/datasets/HKisland_GNSS02.bag
+  gnss_topic: /dji_osdk_ros/rtk_position
+  imu_topic: /dji_osdk_ros/imu
+  attitude_topic: /dji_osdk_ros/attitude
+  rtk_velocity_topic: /dji_osdk_ros/rtk_velocity
+  rtk_yaw_topic: /dji_osdk_ros/rtk_yaw
+  rtk_quality_topic: /dji_osdk_ros/rtk_info_position
+  livox_imu_topic: /livox/imu
+  lidar_topic: /livox/lidar
+filter:
+  mode: error_state
+  gnss_sigma_m: 0.05
+  fixed_rtk_sigma_m: 0.05
+  fixed_rtk_quality_value: 50
+  float_rtk_sigma_m: 1.5
+  rtk_velocity_sigma_mps: 0.1
+  rtk_yaw_sigma_deg: 1.0
+  accel_noise: 0.15
+  gyro_noise: 0.02
+  accel_bias_noise: 0.0001
+  gyro_bias_noise: 0.00001
+  robust_threshold_m: 4.0
+  robust_sigma_scale: 5.0
+  outlier_threshold_m: 20.0
+  use_external_attitude: true
+  lever_arm_body_m: [0.0, 0.0, 0.0]
+mapping:
+  orientation_source: attitude
+  navigation_time_offset_s: -0.60
+  start_lidar_frame: 500
+  max_lidar_frames: 120
+  max_points_per_frame: 72000
+  keyframe_stride: 5
+  registration_voxel_m: 0.5
+  blind_m: 0.8
+  extrinsic:
+    rotation_body_lidar:
+    - [0.0, 1.0, 0.0]
+    - [0.0, 0.0, -1.0]
+    - [-1.0, 0.0, 0.0]
+    translation_body_lidar_m: [0.0, 0.0, 0.0]
+outputs:
+  root: outputs_joint_kfgins_sample
+registration:
+  max_correspondence_m: 2.0
+  iterations: 30
+  minimum_inlier_fraction: 0.25
+  maximum_rmse_m: 0.8
+  maximum_correction_m: 2.0
+  maximum_correction_deg: 4.0
+  strip_min_keyframe_gap: 20
+  strip_search_radius_m: 25.0
+  max_strip_edges_per_keyframe: 2
+optimization:
+  iterations: 30
+  robust_kernel: Huber
+  robust_width: 1.0
+  rtk_translation_weight: 100.0
+  attitude_rotation_weight: 100.0
+  maximum_pose_correction_m: 3.0
+  maximum_pose_correction_deg: 6.0
+camera:
+  topic: /left_camera/image/compressed
+  intrinsics:
+    - [1444.431662789634, 0.0, 1177.801079401826]
+    - [0.0, 1444.343536688358, 1043.601026568268]
+    - [0.0, 0.0, 1.0]
+  distortion: [-0.05729528706141188, 0.1210407244166642, 0.001274128378760289, 0.0004389741530109464]
+  rotation_camera_lidar:
+    - [0.00438814, -0.999807, -0.0191582]
+    - [-0.00978695, 0.0191145, -0.999769]
+    - [0.999942, 0.00457463, -0.00970118]
+  translation_camera_lidar_m: [0.016069, 0.0871753, -0.0718021]
+  time_offset_s: 0.1
+  max_time_difference_s: 0.06
+  depth_tolerance_m: 0.3

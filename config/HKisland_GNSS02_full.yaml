@@ -1,0 +1,31 @@
+bag:
+  path: /home/shuai/code/datasets/HKisland_GNSS02.bag
+  gnss_topic: /dji_osdk_ros/rtk_position
+  imu_topic: /dji_osdk_ros/imu
+  attitude_topic: /dji_osdk_ros/attitude
+  lidar_topic: /livox/lidar
+filter:
+  gnss_sigma_m: 1.5
+  accel_noise: 0.8
+  subtract_gravity: true
+mapping:
+  start_lidar_frame: 500
+  max_lidar_frames: 120
+  max_points_per_frame: 72000
+  extrinsic:
+    rotation_body_lidar:
+    - - 1.0
+      - 0.0
+      - 0.0
+    - - 0.0
+      - 1.0
+      - 0.0
+    - - 0.0
+      - 0.0
+      - 1.0
+    translation_body_lidar_m:
+    - 0.0
+    - 0.0
+    - 0.0
+outputs:
+  root: outputs_full

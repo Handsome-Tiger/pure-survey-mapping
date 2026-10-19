@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+.venv/
+venv/
+
+# Raw field data and generated products (large and/or private)
+*.bag
+*.bag.active
+*.ply
+*.pcd
+*.las
+*.laz
+*.npz
+*.7z
+outputs*/
+data/
+
+# Local scratch/patch artifacts
+*.ed
+*.orig
+*.rej
+*.patch
+.agents/
+.superpowers/
+ppt_update_work/
+雄安数据采集0521/
+*.pptx
+docs/figures/*.png
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
