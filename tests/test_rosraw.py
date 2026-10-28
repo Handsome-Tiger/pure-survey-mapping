@@ -2,7 +2,7 @@ import struct
 
 import numpy as np
 
-from survey_mapping.rosraw import parse_header, parse_imu, parse_int16, parse_livox_custom, parse_navsatfix, parse_uint8, parse_vector3_stamped
+from survey_mapping.rosraw import parse_header, parse_imu, parse_int16, parse_livox_custom, parse_navsatfix, parse_odometry, parse_uint8, parse_vector3_stamped
 
 
 def pack_header(seq=7, secs=10, nsecs=20, frame_id="map"):
@@ -65,6 +65,26 @@ def test_parse_vector3_stamped_reads_timestamp_and_vector():
     assert np.allclose(msg.vector, [1.25, -2.5, 3.75])
 
 
+def test_parse_odometry_reads_pose_and_linear_velocity():
+    child = b"gnss_ins_enu"
+    raw = pack_header(frame_id="gnss_ins") + struct.pack("<I", len(child)) + child
+    raw += struct.pack("<3d", 1.0, 2.0, 3.0)
+    raw += struct.pack("<4d", 0.1, 0.2, 0.3, 0.9)
+    raw += struct.pack("<36d", *([0.0] * 36))
+    raw += struct.pack("<3d", 4.0, 5.0, 6.0)
+    raw += struct.pack("<3d", 0.0, 0.0, 0.0)
+    raw += struct.pack("<36d", *([0.0] * 36))
+
+    msg = parse_odometry(raw)
+
+    assert msg.frame_id == "gnss_ins"
+    assert msg.child_frame_id == "gnss_ins_enu"
+    assert np.allclose(msg.position, [1.0, 2.0, 3.0])
+    assert np.allclose(msg.quaternion, [0.1, 0.2, 0.3, 0.9])
+    assert np.allclose(msg.linear_velocity, [4.0, 5.0, 6.0])
+
+
 def test_parse_scalar_std_messages_without_fabricating_timestamps():
     assert parse_int16(struct.pack("<h", -123)) == -123
     assert parse_uint8(struct.pack("<B", 50)) == 50
+
