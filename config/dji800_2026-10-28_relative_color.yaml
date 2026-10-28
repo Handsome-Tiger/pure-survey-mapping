@@ -1,0 +1,113 @@
+bag:
+  path: /mnt/e/桌面/三维建模/fast/bags/dji800_run_2026-10-28-10-59-32_1.bag
+  gnss_topic: /gnss/navsat
+  imu_topic: /gnss/imu200
+  attitude_topic: /gnss/imu
+  attitude_message_type: sensor_msgs/Imu
+  rtk_velocity_topic: /gnss/odom
+  rtk_velocity_message_type: nav_msgs/Odometry
+  rtk_velocity_frame: enu
+  livox_imu_topic: /livox/imu
+  lidar_topic: /livox/lidar
+
+# This recording contains ordinary GNSS rather than fixed RTK.  The reported
+# covariance corresponds to roughly 7-15 m horizontal uncertainty, so GNSS is
+# deliberately used as a loose global prior and not as survey-grade truth.
+filter:
+  mode: error_state
+  gnss_sigma_m: 10.0
+  fixed_rtk_sigma_m: 10.0
+  rtk_velocity_sigma_mps: 0.5
+  accel_noise: 0.15
+  gyro_noise: 0.02
+  accel_bias_noise: 0.0001
+  gyro_bias_noise: 0.00001
+  robust_threshold_m: 20.0
+  robust_sigma_scale: 5.0
+  outlier_threshold_m: 60.0
+  use_external_attitude: true
+  lever_arm_body_m: [0.0, 0.0, 0.0]
+
+time_alignment:
+  method: gyro_correlation
+  search_min_s: -1.40
+  search_max_s: -1.00
+  step_s: 0.002
+  sample_period_s: 0.02
+  minimum_correlation: 0.90
+  allow_fixed_fallback: false
+
+mapping:
+  orientation_source: attitude
+  navigation_time_offset_s: -1.188
+  deskew_orientation_source: livox_imu
+  livox_imu_gyro_bias_rad_s: [0.0, 0.0, 0.0]
+  keyframe_stride: 10
+  registration_voxel_m: 0.5
+  blind_m: 0.8
+  optimized_cloud_output: /mnt/e/桌面/三维建模/fast/outputs/dji800_run_2026-10-28-10-59-32_1/cloud_optimized_geometry_livox_deskew.ply
+  extrinsic:
+    # Reused from the previously validated DJI800/Livox rig calibration.
+    rotation_body_lidar:
+      - [0.0, 1.0, 0.0]
+      - [0.0, 0.0, -1.0]
+      - [-1.0, 0.0, 0.0]
+    translation_body_lidar_m: [0.0, 0.0, 0.0]
+  livox_imu_extrinsic:
+    rotation_imu_lidar:
+      - [1.0, 0.0, 0.0]
+      - [0.0, 1.0, 0.0]
+      - [0.0, 0.0, 1.0]
+    translation_imu_lidar_m: [0.04165, 0.02326, -0.0284]
+
+outputs:
+  root: /mnt/e/桌面/三维建模/fast/outputs/dji800_run_2026-10-28-10-59-32_1
+
+registration:
+  max_correspondence_m: 2.0
+  iterations: 30
+  minimum_inlier_fraction: 0.25
+  maximum_rmse_m: 0.8
+  maximum_correction_m: 3.0
+  maximum_correction_deg: 6.0
+  strip_min_keyframe_gap: 20
+  strip_search_radius_m: 25.0
+  max_strip_edges_per_keyframe: 2
+
+optimization:
+  iterations: 30
+  robust_kernel: Huber
+  robust_width: 1.0
+  # 1/sigma^2 for a 10 m GNSS prior; LiDAR registration therefore dominates.
+  rtk_translation_weight: 0.01
+  attitude_rotation_weight: 100.0
+  lidar_rotation_weight_scale: 100.0
+  maximum_pose_correction_m: 10.0
+  maximum_pose_correction_deg: 10.0
+
+camera:
+  topic: /left_camera/image/compressed
+  # The prior 2448x2048 calibration is scaled to this bag's 1440x1080 images.
+  # A fresh intrinsic/extrinsic calibration is recommended before survey use.
+  intrinsics:
+    - [849.6656839939023, 0.0, 692.8241643540154]
+    - [0.0, 761.6655369255013, 550.33647885436]
+    - [0.0, 0.0, 1.0]
+  distortion: [-0.05729528706141188, 0.1210407244166642, 0.001274128378760289, 0.0004389741530109464]
+  rotation_camera_lidar:
+    - [0.00438814, -0.999807, -0.0191582]
+    - [-0.00978695, 0.0191145, -0.999769]
+    - [0.999942, 0.00457463, -0.00970118]
+  translation_camera_lidar_m: [0.016069, 0.0871753, -0.0718021]
+  # Camera headers precede the closest Livox frames by about 38 ms.
+  time_offset_s: 0.038
+  depth_tolerance_m: 0.3
+  multi_view_window_s: 0.12
+  maximum_camera_candidates: 3
+  minimum_true_color_fraction: 0.10
+  minimum_paired_frame_fraction: 0.95
+  maximum_mean_camera_time_difference_s: 0.03
+  full_bag_required: true
+  complete_output: /mnt/e/桌面/三维建模/fast/outputs/dji800_run_2026-10-28-10-59-32_1/cloud_optimized_color_complete.ply
+  strict_output: /mnt/e/桌面/三维建模/fast/outputs/dji800_run_2026-10-28-10-59-32_1/cloud_optimized_color_strict.ply
+
