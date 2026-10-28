@@ -18,6 +18,7 @@ from survey_mapping.rosraw import (
     parse_int16,
     parse_livox_custom,
     parse_navsatfix,
+    parse_odometry,
     parse_uint8,
     parse_vector3_stamped,
     parse_quaternion_stamped,
@@ -41,11 +42,12 @@ def extract_navigation(config):
         config["bag"]["gnss_topic"],
         config["bag"]["imu_topic"],
         config["bag"]["attitude_topic"],
-        config["bag"].get("rtk_velocity_topic", "/dji_osdk_ros/rtk_velocity"),
-        config["bag"].get("rtk_yaw_topic", "/dji_osdk_ros/rtk_yaw"),
-        config["bag"].get("rtk_quality_topic", "/dji_osdk_ros/rtk_info_position"),
         config["bag"].get("livox_imu_topic", "/livox/imu"),
     ]
+    for key in ("rtk_velocity_topic", "rtk_yaw_topic", "rtk_quality_topic"):
+        if config["bag"].get(key):
+            topics.append(config["bag"][key])
+    topics = list(dict.fromkeys(topics))
     gnss_rows = []
     imu_rows = []
     attitude_rows = []
@@ -53,9 +55,9 @@ def extract_navigation(config):
     rtk_yaw_rows = []
     rtk_quality_rows = []
     livox_imu_rows = []
-    rtk_velocity_topic = config["bag"].get("rtk_velocity_topic", "/dji_osdk_ros/rtk_velocity")
-    rtk_yaw_topic = config["bag"].get("rtk_yaw_topic", "/dji_osdk_ros/rtk_yaw")
-    rtk_quality_topic = config["bag"].get("rtk_quality_topic", "/dji_osdk_ros/rtk_info_position")
+    rtk_velocity_topic = config["bag"].get("rtk_velocity_topic")
+    rtk_yaw_topic = config["bag"].get("rtk_yaw_topic")
+    rtk_quality_topic = config["bag"].get("rtk_quality_topic")
     livox_imu_topic = config["bag"].get("livox_imu_topic", "/livox/imu")
     with rosbag.Bag(str(bag_path)) as bag:
         for topic, raw_msg, _stamp in bag.read_messages(topics=topics, raw=True):
@@ -78,8 +80,12 @@ def extract_navigation(config):
                 msg = parse_quaternion_stamped(data)
                 attitude_rows.append([msg.stamp, *msg.quaternion.tolist()])
             elif topic == rtk_velocity_topic:
-                msg = parse_vector3_stamped(data)
-                rtk_velocity_rows.append([msg.stamp, *msg.vector.tolist()])
+                if config["bag"].get("rtk_velocity_message_type") == "nav_msgs/Odometry":
+                    msg = parse_odometry(data)
+                    rtk_velocity_rows.append([msg.stamp, *msg.linear_velocity.tolist()])
+                else:
+                    msg = parse_vector3_stamped(data)
+                    rtk_velocity_rows.append([msg.stamp, *msg.vector.tolist()])
             elif topic == rtk_yaw_topic:
                 rtk_yaw_rows.append([_stamp.to_sec(), parse_int16(data)])
             elif topic == rtk_quality_topic:
@@ -204,8 +210,11 @@ def run_filter_error_state(config, gnss, imu, attitude, rtk_velocity=None, rtk_y
             residual_rows.append([gnss_times[gnss_idx], *residual.tolist(), float(np.linalg.norm(residual)), accepted_value])
             gnss_idx += 1
         while velocity_idx < len(rtk_velocity) and rtk_velocity[velocity_idx, 0] <= t:
-            velocity_ned = rtk_velocity[velocity_idx, 1:4]
-            velocity_enu = np.array([velocity_ned[1], velocity_ned[0], -velocity_ned[2]], dtype=float)
+            velocity_raw = rtk_velocity[velocity_idx, 1:4]
+            if str(config.get("bag", {}).get("rtk_velocity_frame", "ned")).lower() == "enu":
+                velocity_enu = velocity_raw
+            else:
+                velocity_enu = np.array([velocity_raw[1], velocity_raw[0], -velocity_raw[2]], dtype=float)
             filt.update_velocity(velocity_enu, sigma=float(filter_cfg.get("rtk_velocity_sigma_mps", 0.1)))
             velocity_idx += 1
         while yaw_idx < len(rtk_yaw) and rtk_yaw[yaw_idx, 0] <= t:
@@ -397,3 +406,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
