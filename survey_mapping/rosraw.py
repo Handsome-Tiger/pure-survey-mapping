@@ -42,6 +42,16 @@ class Vector3Stamped:
 
 
 @dataclass
+class Odometry:
+    stamp: float
+    frame_id: str
+    child_frame_id: str
+    position: np.ndarray
+    quaternion: np.ndarray
+    linear_velocity: np.ndarray
+
+
+@dataclass
 class LivoxCustom:
     stamp: float
     timebase_ns: int
@@ -110,6 +120,26 @@ def parse_vector3_stamped(data):
     return Vector3Stamped(stamp=header.stamp, frame_id=header.frame_id, vector=np.asarray(vector, dtype=float))
 
 
+def parse_odometry(data):
+    """Parse the standard ROS1 nav_msgs/Odometry wire layout."""
+    header, offset = parse_header(data)
+    (length,), offset = _unpack("<I", data, offset)
+    child_frame_id = data[offset : offset + length].decode("utf-8")
+    offset += length
+    position, offset = _unpack("<3d", data, offset)
+    quaternion, offset = _unpack("<4d", data, offset)
+    _, offset = _unpack("<36d", data, offset)
+    linear_velocity, offset = _unpack("<3d", data, offset)
+    return Odometry(
+        stamp=header.stamp,
+        frame_id=header.frame_id,
+        child_frame_id=child_frame_id,
+        position=np.asarray(position, dtype=float),
+        quaternion=np.asarray(quaternion, dtype=float),
+        linear_velocity=np.asarray(linear_velocity, dtype=float),
+    )
+
+
 def parse_int16(data):
     (value,), _offset = _unpack("<h", data, 0)
     return value
@@ -156,3 +186,4 @@ def parse_compressed_image(data):
         format=image_format,
         data=image_data,
     )
+
