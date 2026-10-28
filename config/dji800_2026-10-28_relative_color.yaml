@@ -66,24 +66,36 @@ outputs:
 registration:
   max_correspondence_m: 2.0
   iterations: 30
-  minimum_inlier_fraction: 0.25
-  maximum_rmse_m: 0.8
-  maximum_correction_m: 3.0
-  maximum_correction_deg: 6.0
+  # Cross-strip closures use conservative gates to avoid perceptual aliases.
+  minimum_inlier_fraction: 0.5
+  maximum_rmse_m: 0.3
+  maximum_correction_m: 1.5
+  maximum_correction_deg: 3.0
+  # Consecutive odometry edges may use the original wider convergence basin.
+  adjacent_minimum_inlier_fraction: 0.25
+  adjacent_maximum_rmse_m: 0.8
+  adjacent_maximum_correction_m: 3.0
+  adjacent_maximum_correction_deg: 6.0
+  # Rejected adjacent ICP edges retain the initial navigation transform at
+  # minimum graph weight so a bad registration cannot split the pose graph.
+  preserve_adjacent_connectivity: true
   strip_min_keyframe_gap: 20
   strip_search_radius_m: 25.0
   max_strip_edges_per_keyframe: 2
 
 optimization:
   iterations: 30
-  robust_kernel: Huber
+  robust_kernel: ""
   robust_width: 1.0
   # 1/sigma^2 for a 10 m GNSS prior; LiDAR registration therefore dominates.
   rtk_translation_weight: 0.01
   attitude_rotation_weight: 100.0
   lidar_rotation_weight_scale: 100.0
-  maximum_pose_correction_m: 10.0
-  maximum_pose_correction_deg: 10.0
+  adjacent_fallback_translation_weight: 10000.0
+  maximum_pose_correction_m: 30.0
+  maximum_pose_correction_deg: 20.0
+  maximum_adjacent_correction_step_m: 3.5
+  maximum_adjacent_correction_step_deg: 7.0
 
 camera:
   topic: /left_camera/image/compressed
