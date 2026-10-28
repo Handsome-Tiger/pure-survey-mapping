@@ -22,7 +22,11 @@ from survey_mapping.pose_graph import (
 )
 
 
-def load_edges(output_root, rotation_weight_scale=1.0):
+def load_edges(
+    output_root,
+    rotation_weight_scale=1.0,
+    adjacent_fallback_translation_weight=25.0,
+):
     transforms = np.load(Path(output_root) / "lidar_constraint_transforms.npz")[
         "transforms"
     ]
@@ -32,9 +36,12 @@ def load_edges(output_root, rotation_weight_scale=1.0):
     ) as handle:
         for row in csv.DictReader(handle):
             index = int(float(row["transform_index"]))
-            rmse = max(float(row["point_to_plane_rmse_m"]), 0.05)
-            inlier = float(row["inlier_fraction"])
-            translation_weight = float(np.clip(inlier / (rmse * rmse), 1.0, 100.0))
+            if row.get("type") == "adjacent_fallback":
+                translation_weight = float(adjacent_fallback_translation_weight)
+            else:
+                rmse = max(float(row["point_to_plane_rmse_m"]), 0.05)
+                inlier = float(row["inlier_fraction"])
+                translation_weight = float(np.clip(inlier / (rmse * rmse), 1.0, 100.0))
             rotation_weight = translation_weight * float(rotation_weight_scale)
             edges.append(
                 (
@@ -56,7 +63,14 @@ def optimize(config):
     lidar_rotation_scale = float(
         optimization.get("lidar_rotation_weight_scale", 1.0)
     )
-    edges = load_edges(output_root, rotation_weight_scale=lidar_rotation_scale)
+    fallback_translation_weight = float(
+        optimization.get("adjacent_fallback_translation_weight", 25.0)
+    )
+    edges = load_edges(
+        output_root,
+        rotation_weight_scale=lidar_rotation_scale,
+        adjacent_fallback_translation_weight=fallback_translation_weight,
+    )
     graph_path = output_root / "pose_graph.g2o"
     optimized_path = output_root / "pose_graph_optimized.g2o"
     prior_translation_weight = float(
@@ -105,10 +119,38 @@ def optimize(config):
         )
     max_translation = float(optimization.get("maximum_pose_correction_m", 3.0))
     max_rotation = float(optimization.get("maximum_pose_correction_deg", 6.0))
+    correction_vectors = np.asarray(
+        [after[:3, 3] - before[:3, 3] for before, after in zip(initial, optimized)]
+    )
+    adjacent_translation_steps = np.linalg.norm(
+        np.diff(correction_vectors, axis=0), axis=1
+    )
+    correction_rotations = [
+        after[:3, :3] @ before[:3, :3].T
+        for before, after in zip(initial, optimized)
+    ]
+    adjacent_rotation_steps = np.asarray(
+        [
+            np.degrees(
+                Rotation.from_matrix(second @ first.T).magnitude()
+            )
+            for first, second in zip(correction_rotations, correction_rotations[1:])
+        ]
+    )
+    max_adjacent_translation = float(
+        optimization.get("maximum_adjacent_correction_step_m", max_translation)
+    )
+    max_adjacent_rotation = float(
+        optimization.get("maximum_adjacent_correction_step_deg", max_rotation)
+    )
     if max(corrections_translation, default=0.0) > max_translation:
         raise RuntimeError("Pose graph translation correction exceeded safety limit")
     if max(corrections_rotation, default=0.0) > max_rotation:
         raise RuntimeError("Pose graph rotation correction exceeded safety limit")
+    if max(adjacent_translation_steps, default=0.0) > max_adjacent_translation:
+        raise RuntimeError("Pose graph adjacent translation step exceeded safety limit")
+    if max(adjacent_rotation_steps, default=0.0) > max_adjacent_rotation:
+        raise RuntimeError("Pose graph adjacent rotation step exceeded safety limit")
     np.savez_compressed(
         output_root / "keyframe_poses_optimized.npz",
         transforms=np.asarray(optimized),
@@ -134,12 +176,19 @@ def optimize(config):
         "keyframe_count": len(initial),
         "lidar_edge_count": len(edges),
         "lidar_rotation_weight_scale": lidar_rotation_scale,
+        "adjacent_fallback_translation_weight": fallback_translation_weight,
         "prior_translation_weight": prior_translation_weight,
         "prior_rotation_weight": prior_rotation_weight,
         "mean_translation_correction_m": float(np.mean(corrections_translation)),
         "max_translation_correction_m": float(np.max(corrections_translation)),
         "mean_rotation_correction_deg": float(np.mean(corrections_rotation)),
         "max_rotation_correction_deg": float(np.max(corrections_rotation)),
+        "max_adjacent_correction_step_m": float(
+            np.max(adjacent_translation_steps, initial=0.0)
+        ),
+        "max_adjacent_correction_step_deg": float(
+            np.max(adjacent_rotation_steps, initial=0.0)
+        ),
         "g2o_stdout_tail": process.stdout[-2000:],
         "g2o_stderr_tail": process.stderr[-2000:],
     }
@@ -161,4 +210,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
