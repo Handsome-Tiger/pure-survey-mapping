@@ -8,15 +8,19 @@
 |---|---|---|---:|
 | `lidar_topic` `/livox/lidar` | `livox_ros_driver/CustomMsg` | `timebase` ns；每点 `offset_time` ns、`x/y/z` m、`reflectivity` 0–255、`tag`、`line` | 10 Hz |
 | `livox_imu_topic` `/livox/imu` | `sensor_msgs/Imu` | `header.stamp`；角速度 rad/s；线加速度 m/s² | 约 200 Hz |
-| `imu_topic` `/dji_osdk_ros/imu` | `sensor_msgs/Imu` | `header.stamp`；角速度 rad/s；线加速度 m/s² | 400 Hz |
-| `attitude_topic` `/dji_osdk_ros/attitude` | `geometry_msgs/QuaternionStamped` | `header.stamp`；四元数 `x,y,z,w`，与项目 ENU/机体系约定一致 | 100 Hz |
+| `imu_topic` `/dji_osdk_ros/imu` 或 `/gnss/imu200` | `sensor_msgs/Imu` | `header.stamp`；角速度 rad/s；线加速度 m/s² | 约 200–400 Hz |
+| `attitude_topic` `/dji_osdk_ros/attitude` 或 `/gnss/imu` | `geometry_msgs/QuaternionStamped` 或 `sensor_msgs/Imu` | `header.stamp`；有效、归一化的姿态四元数 `x,y,z,w`，与项目 ENU/机体系约定一致 | 1–100 Hz |
 | `gnss_topic` `/dji_osdk_ros/rtk_position` | `sensor_msgs/NavSatFix` | WGS84 纬度/经度（度）、椭球高（m）、status/service | 5 Hz |
-| `rtk_velocity_topic` `/dji_osdk_ros/rtk_velocity` | `geometry_msgs/Vector3Stamped` | NED 速度 `x=north,y=east,z=down`，m/s | 5 Hz |
-| `rtk_yaw_topic` `/dji_osdk_ros/rtk_yaw` | `std_msgs/Int16` | 原始偏航角，当前代码按百分之一度记录 | 5 Hz |
-| `rtk_quality_topic` `/dji_osdk_ros/rtk_info_position` | `std_msgs/UInt8` | RTK 解状态；基线中数值 `50` 代表 fixed | 5 Hz |
+| `rtk_velocity_topic` `/dji_osdk_ros/rtk_velocity` 或 `/gnss/odom` | `geometry_msgs/Vector3Stamped` 或 `nav_msgs/Odometry` | `vector` 或 `twist.twist.linear`，m/s；在 YAML 中声明 NED/ENU | 1–5 Hz |
+| `rtk_yaw_topic` `/dji_osdk_ros/rtk_yaw`（可选） | `std_msgs/Int16` | 原始偏航角，当前代码按百分之一度记录 | 5 Hz |
+| `rtk_quality_topic` `/dji_osdk_ros/rtk_info_position`（可选） | `std_msgs/UInt8` | RTK 解状态；基线中数值 `50` 代表 fixed | 5 Hz |
 | `camera.topic` `/left_camera/image/compressed` | `sensor_msgs/CompressedImage` | `header.stamp`、`format`、JPEG/PNG 压缩字节；不得二次改变分辨率 | 10 Hz |
 
 “基线频率”是已跑通数据的参考值，不是解析器硬编码值。实际采集可以略有不同，但必须保证连续覆盖和足够的运动激励。时间戳用 ROS `secs+nsecs` 表示 Unix 秒；Livox 点时刻为 `timebase × 1e-9 + offset_time × 1e-9`。
+
+姿态消息类型不同于默认值时，设置 `bag.attitude_message_type: sensor_msgs/Imu`。速度来自里程计时，设置 `bag.rtk_velocity_message_type: nav_msgs/Odometry`；若速度已经是 ENU，则同时设置 `bag.rtk_velocity_frame: enu`。`rtk_yaw_topic` 和 `rtk_quality_topic` 可以不配置，但 LiDAR、两路 IMU、姿态、GNSS、相机仍是生产流程必需输入。
+
+`NavSatFix` 必须检查 `position_covariance` 和接收机解状态。只有确认 fixed RTK 且协方差可信时，才能使用厘米级 `fixed_rtk_sigma_m` 和高平移先验权重；普通单点 GNSS 应使用与其实际误差相符的米级 sigma，并把成果标为 GNSS 辅助相对建图，不能宣称厘米级绝对精度。
 
 ## 2. 强烈建议同时记录的时间诊断 topic
 
@@ -63,5 +67,6 @@ python3 scripts/run_production_pipeline.py \
   --dry-run
 ```
 
-预检会核对配置指定的九个必需 topic 与消息类型、完整包限制、相机标定字段和 g2o。它不替代对时间戳单调性、频率、图像曝光和实际外参质量的人工/样本检查。
+预检会核对配置指定的核心 topic、已启用可选 topic 及其消息类型、完整包限制、相机标定字段和 g2o。它不替代对时间戳单调性、频率、图像曝光和实际外参质量的人工/样本检查。
+
 
