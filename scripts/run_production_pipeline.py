@@ -74,9 +74,15 @@ def configured_topics(config: dict) -> dict[str, str]:
         "lidar_topic": "livox_ros_driver/CustomMsg",
         "livox_imu_topic": "sensor_msgs/Imu",
         "imu_topic": "sensor_msgs/Imu",
-        "attitude_topic": "geometry_msgs/QuaternionStamped",
         "gnss_topic": "sensor_msgs/NavSatFix",
-        "rtk_velocity_topic": "geometry_msgs/Vector3Stamped",
+    }
+    keys["attitude_topic"] = str(
+        bag.get("attitude_message_type", "geometry_msgs/QuaternionStamped")
+    )
+    optional = {
+        "rtk_velocity_topic": str(
+            bag.get("rtk_velocity_message_type", "geometry_msgs/Vector3Stamped")
+        ),
         "rtk_yaw_topic": "std_msgs/Int16",
         "rtk_quality_topic": "std_msgs/UInt8",
     }
@@ -86,6 +92,9 @@ def configured_topics(config: dict) -> dict[str, str]:
     if missing:
         raise ValueError("Missing required topic configuration: " + ", ".join(missing))
     topics = {str(bag[key]): expected for key, expected in keys.items()}
+    topics.update(
+        {str(bag[key]): expected for key, expected in optional.items() if bag.get(key)}
+    )
     topics[str(camera["topic"])] = "sensor_msgs/CompressedImage"
     return topics
 
@@ -202,4 +211,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
 
