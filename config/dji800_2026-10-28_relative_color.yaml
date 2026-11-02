@@ -73,8 +73,8 @@ registration:
   maximum_correction_deg: 3.0
   # Consecutive odometry edges may use the original wider convergence basin.
   adjacent_minimum_inlier_fraction: 0.25
-  adjacent_maximum_rmse_m: 0.8
-  adjacent_maximum_correction_m: 3.0
+  adjacent_maximum_rmse_m: 0.6
+  adjacent_maximum_correction_m: 2.0
   adjacent_maximum_correction_deg: 6.0
   # Rejected adjacent ICP edges retain the initial navigation transform at
   # minimum graph weight so a bad registration cannot split the pose graph.
